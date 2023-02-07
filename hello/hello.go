@@ -1,7 +1,12 @@
 package main
 
-import "fmt"
+import (
+	"fmt"
+	"github.com/pastor-robert/GoBox/greetings"
+)
+
 
 func main() {
-	fmt.Println("hello, world!")
+	message := greetings.Hello("Ruth")
+	fmt.Println(message)
 }
