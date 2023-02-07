@@ -1,0 +1,2 @@
+# GoBox
+Random Go quickies
