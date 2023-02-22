@@ -1,10 +1,9 @@
 // RSG ("Ready, Sim, Go") is a simulation engine inspired by SystemC
 
-package main
+package rsg
 
 import (
 	"container/heap"
-	"testing"
 	"fmt"
 )
 
@@ -95,6 +94,7 @@ func (s *Simulation) Now() SimTime {
 }
 
 // Add to an Event's wait list
+// TODO `f` should be an interface
 func (s *Simulation) Wait(e *Event, f Callback, x any) {
 	s.events[e] = append(s.events[e], Waiter{f, x})
 
@@ -125,8 +125,9 @@ func (s *Simulation) EventPush(e *Event) {
 }
 
 // Perform all of the events that expire in the current delta cycle
-func (s *Simulation) deltaOne() {
-
+// TODO this should be lower-case private, but the higher-level
+// api funciton isn't written yet.
+func (s *Simulation) DeltaOne() {
 
 	// Grab all candidates to avoid crazy loops later
 	immediate := []*Event{}
@@ -153,35 +154,13 @@ func (s *Simulation) deltaOne() {
 }
 
 // Run as many delta cycles until no more immediate deadlines
-func (s *Simulation) deltaN() {
-
-}
-
-func TestXxx(t *testing.T) {
-	fmt.Printf("in the test\n")
-	t.Errorf("wah-wah")
-}
-
-func hey(s *Simulation, e *Event, x any) {
-	i := x.(int)
-	fmt.Printf("callback: %d\n", i)
-	e3 := s.NewEvent("EV3")
-	if i < 1000 {
-		s.Wait(e3, hey, i*10)
+// TODO this should be lower-case private, but the higher-level
+// api funciton isn't written yet.
+func (s *Simulation) DeltaN() {
+	deltaCounter := 1
+	for len(s.runnable) > 0 && s.EventPeek().deadline == s.now {
+		s.DeltaOne()
+		fmt.Printf("---- %d ----\n", deltaCounter)
+		deltaCounter += 1
 	}
-}
-
-func main() {
-	s := NewSimulation("My Sim")
-	e1 := s.NewEvent("EV1")
-	e2 := s.NewEvent("EV2")
-	s.Wait(e1, hey, 1)
-	s.Wait(e2, hey, 2)
-	fmt.Printf("------------\n")
-	s.deltaOne()
-	fmt.Printf("------------\n")
-	s.deltaOne()
-	fmt.Printf("------------\n")
-	s.deltaOne()
-	fmt.Printf("------------\n")
 }
