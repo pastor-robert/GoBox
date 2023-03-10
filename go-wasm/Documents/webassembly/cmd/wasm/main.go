@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"encoding/json"
 	"syscall/js"
+	"errors"
 )
 
 func prettyJson(input string) (string, error) {
@@ -21,16 +22,23 @@ func prettyJson(input string) (string, error) {
 func jsonWrapper() js.Func {
 	jsonFunc := js.FuncOf(func(this js.Value, args []js.Value) any {
 		if len(args) != 1 {
-			return "Invalid number of arguments"
+			return errors.New("Invalid number of arguments")
 		}
 		inputJSON := args[0].String()
 		fmt.Printf("input %s\n", inputJSON)
 		pretty, err := prettyJson(inputJSON)
 		if err != nil {
-			fmt.Printf("unable to convert %s\n", err)
-			return err.Error()
+			errStr := fmt.Sprintf("unable to convert %s\n", err)
+			return errors.New(errStr)
 		}
-		return pretty
+
+		jsDoc := js.Global().Get("document")
+		if !jsDoc.Truthy() { return errors.New("get object doc") }
+		jsonOutputTextArea := jsDoc.Call("getElementById", "jsonoutput")
+		if !jsonOutputTextArea.Truthy() { return errors.New("getElementByid") }
+		jsonOutputTextArea.Set("value", pretty)
+		return nil
+
 	})
 	return jsonFunc
 }
