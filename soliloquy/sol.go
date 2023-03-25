@@ -5,18 +5,40 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"net/url"
+	"time"
 )
 
+// Run an http server in the background, then
+// run a series of http clients in the foreground.
+// The server prints the message that the client sent.
+// The client prints the message that the server sent.
 func main() {
 	fmt.Println("yo, wo")
 	go server()
-	for i := 0; i < 5; i++ {
-		client("http://localhost:8000")
+
+	// TODO One really shouldn't use `Sleep` to manage
+	// concurrency.
+	time.Sleep(time.Second * 1)
+
+	// TODO loop count should be configurable
+
+	for i := 0; i < 500; i++ {
+		u := url.URL{
+			Host:   "localhost:8000",
+			Scheme: "http",
+			Path:   "/",
+			RawQuery: url.Values{
+				"msg": {"Hello from client"},
+				"i":   {fmt.Sprint(i)},
+			}.Encode(),
+		}
+		client(u)
 	}
 }
 
-func client(url string) {
-	resp, err := http.Get(url + "?Hello+from+client")
+func client(u url.URL) {
+	resp, err := http.Get(u.String())
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -35,8 +57,10 @@ func server() {
 	http.HandleFunc(
 		"/",
 		func(w http.ResponseWriter, r *http.Request) {
-			io.WriteString(w, "Hello from server")
-			fmt.Printf("S %s\n", r.URL)
+			i := r.FormValue("i")
+			resp := fmt.Sprintf("%s: %s", i, "Hello from server")
+			io.WriteString(w, resp)
+			fmt.Printf("S %s: %s\n", i, r.FormValue("msg"))
 		})
 	http.ListenAndServe(":8000", nil)
 }
