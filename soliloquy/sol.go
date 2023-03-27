@@ -28,19 +28,18 @@ func main() {
 	// concurrency.
 	time.Sleep(time.Second * 1)
 
-	// TODO loop count should be configurable
-
+	u := url.URL{
+		Host:   "localhost:8000",
+		Scheme: "http",
+		Path:   "/",
+	}
 	for i := 0; i < 500; i++ {
-		u := url.URL{
-			Host:   "localhost:8000",
-			Scheme: "http",
-			Path:   "/",
-			RawQuery: url.Values{
-				"msg": {"Hello from client"},
-				"i":   {fmt.Sprint(i)},
-			}.Encode(),
-		}
+		u.RawQuery = url.Values{
+			"i": {fmt.Sprint(i)},
+			"msg": {"Hello from client"},
+		}.Encode()
 		clientInternal(u)
+
 		u.RawQuery = url.Values{
 			"i": {fmt.Sprint(i*100)},
 			"msg": {"Hello from cURL"},
@@ -66,6 +65,7 @@ func clientInternal(u url.URL) {
 	fmt.Printf("I %s\n", body)
 }
 
+// Fetch the named `URL` using the external `curl` command
 func clientExternal(u url.URL) {
 	out, err := exec.Command("curl", u.String()).Output()
 	if err != nil {
