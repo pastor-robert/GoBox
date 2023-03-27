@@ -1,3 +1,9 @@
+// soliloquy —from the Latin solus ("alone") and loqui ("to speak")—
+// is a speech that one gives to oneself.
+
+// This program launch a web server and a web client, thus speaking
+// to itself
+
 package main
 
 import (
@@ -6,11 +12,12 @@ import (
 	"log"
 	"net/http"
 	"net/url"
+	"os/exec"
 	"time"
 )
 
 // Run an http server in the background, then
-// run a series of http clients in the foreground.
+// run a set of http clients in the foreground.
 // The server prints the message that the client sent.
 // The client prints the message that the server sent.
 func main() {
@@ -33,11 +40,17 @@ func main() {
 				"i":   {fmt.Sprint(i)},
 			}.Encode(),
 		}
-		client(u)
+		clientInternal(u)
+		u.RawQuery = url.Values{
+			"i": {fmt.Sprint(i*100)},
+			"msg": {"Hello from cURL"},
+		}.Encode()
+		clientExternal(u)
 	}
 }
 
-func client(u url.URL) {
+// Fetch the named `URL` and display the returned `.Body`
+func clientInternal(u url.URL) {
 	resp, err := http.Get(u.String())
 	if err != nil {
 		log.Fatal(err)
@@ -50,9 +63,19 @@ func client(u url.URL) {
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Printf("C %s\n", body)
+	fmt.Printf("I %s\n", body)
 }
 
+func clientExternal(u url.URL) {
+	out, err := exec.Command("curl", u.String()).Output()
+	if err != nil {
+		log.Fatal(err)
+	}
+	fmt.Printf("X %s\n", out)
+}
+
+// Launch a web server on "http://0.0.0.0:8000/". For each request, 
+// decode the parameters and return a message in the response.
 func server() {
 	http.HandleFunc(
 		"/",
