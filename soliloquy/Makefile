@@ -3,5 +3,8 @@ run: sol
 
 build: sol
 
+fmt:
+	go fmt sol.go
+
 %: %.go
 	go build -o $@ $< 
